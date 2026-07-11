@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Secrets and local tokens
+.env
+.env.*
+!.env.example
+tokens.json
+**/tokens.json
+
+# Generated media/output
+hood_video_generator/output/*
+!hood_video_generator/output/.gitkeep
+tiktok_video_uploader/output/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+*.bak
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.agents/

@@ -1,0 +1,27 @@
+Du erzeugst einen Bild- und Szenenplan fuer einen Short-Video-Generator.
+
+Gib ausschliesslich eine valide JSON-Liste mit genau 8 Objekten zurueck.
+Jedes Objekt hat exakt diese Felder:
+{"prompt": "ausfuehrlicher Bildprompt", "start_text": "exaktes Zitat aus der Story"}
+
+Regeln:
+- Objekt 1 ist das Cover. Es zeigt das bekannteste Gebaeude, Wahrzeichen, Stadion oder den bekanntesten Ort der Stadt. start_text ist hier ein leerer String.
+- Objekte 2 bis 8 sind genau 7 konkrete Szenen aus der Story in chronologischer Reihenfolge.
+- start_text muss bei jeder Storyszene ein wortwoertliches, unveraendertes Zitat aus der Story mit 4 bis 8 Woertern sein.
+- start_text bezeichnet genau die Stelle, ab der das jeweilige Bild sichtbar werden soll.
+- start_text muss mit dem ersten Satzteil beginnen, der die zentrale Handlung des Bildes tatsaechlich beschreibt. Das Bild darf hoechstens unmittelbar vor dieser Handlung einsetzen, niemals mehrere Saetze vorher.
+- Nutze niemals eine fruehere Einleitung, Reaktion oder Ortsbeschreibung als Anker, wenn die dargestellte Hauptaktion erst spaeter genannt wird.
+- Der Bildprompt darf nur Personen, Handlungen und wichtige Gegenstaende zeigen, die ab start_text bereits genannt werden. Keine Details aus spaeteren Saetzen vorwegnehmen.
+- Das erste Storybild zeigt ausschliesslich die Situation aus dem ersten gesprochenen Storysatz. Es darf keine Person, Gefahr oder Handlung vorwegnehmen, die erst in einem spaeteren Satz auftaucht.
+- Verteile die 7 Szenen ueber die gesamte Handlung und waehle nur deutlich beschriebene, visuell wichtige Momente.
+- Waehle zeitlich deutlich getrennte Szenen. Keine zwei start_text-Zitate aus demselben kurzen Storyabschnitt oder direkt aufeinanderfolgenden Satzteil.
+- Jeder Prompt muss fuer ein einzelnes Bild geeignet sein.
+- Lege vor dem Schreiben intern fuer jede wiederkehrende Person ein festes Aussehen fest: ungefaehres Alter, Geschlecht, Haare, Gesicht, Hautfarbe, Koerperbau und Kleidung.
+- Wiederhole diese Merkmale in JEDEM Prompt, in dem die Person vorkommt. Kleidung, Gesicht, Alter und Koerperbau duerfen sich zwischen Bildern nicht aendern.
+- Keine neuen Hauptpersonen erfinden. Zeige nur Personen, Orte und Handlungen, die zur jeweiligen Storyszene passen.
+- Beschreibe Kameraperspektive, Umgebung und Handlung konkret. Vermeide generische Gruppenbilder und unklare Personen.
+- Alle Bilder muessen denselben visuellen Stil enthalten:
+  cinematic realistic, dark urban mood, rainy night, dramatic lighting, 9:16 vertical, no gore, no text, no watermark
+- Keine lesbaren Texte im Bild.
+- Keine extremen Gewaltdarstellungen.
+- Keine Erklaerungen, kein Markdown, kein zusaetzlicher Text ausserhalb der JSON-Liste.
