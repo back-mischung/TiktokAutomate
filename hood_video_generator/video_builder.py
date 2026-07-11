@@ -78,7 +78,7 @@ class VideoBuilder:
             outro = self._outro_clip(
                 settings.outro_duration,
             )
-        story_images = image_paths[1:]
+        story_images = image_paths
         asset_duration = sum(clip.duration for clip in [outro] if clip is not None)
         story_duration = max(1.0, audio_duration - asset_duration)
         image_schedule = self._story_image_schedule(
@@ -125,9 +125,9 @@ class VideoBuilder:
             return fallback
         try:
             plan = json.loads(image_prompts_path.read_text(encoding="utf-8"))
-            if not isinstance(plan, list) or len(plan) < image_count + 1 or not all(isinstance(item, dict) for item in plan):
+            if not isinstance(plan, list) or len(plan) < image_count or not all(isinstance(item, dict) for item in plan):
                 return fallback
-            anchors = [str(item.get("start_text", "")).strip() for item in plan[1:image_count + 1]]
+            anchors = [str(item.get("start_text", "")).strip() for item in plan[:image_count]]
             alignment = json.loads(alignment_path.read_text(encoding="utf-8"))
             words = alignment_word_starts(alignment)
             if not words:
@@ -157,7 +157,7 @@ class VideoBuilder:
             schedule.append((len(starts) - 1, story_duration - starts[-1]))
             logger.info(
                 "Alle Storybilder starten an ihren gesprochenen Szenenankern: %s",
-                [(index + 2, round(start, 2)) for index, start in enumerate(starts)],
+                [(index + 1, round(start, 2)) for index, start in enumerate(starts)],
             )
             return schedule
         except RuntimeError:
@@ -219,7 +219,7 @@ class VideoBuilder:
         beats: list[dict] = []
         scene_start = 0.0
         for scene_index, (image_index, scene_duration) in enumerate(image_schedule):
-            prompt_item = prompt_plan[image_index + 1] if len(prompt_plan) > image_index + 1 else {}
+            prompt_item = prompt_plan[image_index] if len(prompt_plan) > image_index else {}
             scene_text = " ".join(
                 [
                     str(prompt_item.get("start_text", "")) if isinstance(prompt_item, dict) else "",

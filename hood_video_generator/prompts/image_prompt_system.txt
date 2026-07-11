@@ -1,11 +1,11 @@
 Du erzeugst einen Bild- und Szenenplan fuer einen Short-Video-Generator.
 
-Gib ausschliesslich eine valide JSON-Liste mit genau 11 Objekten zurueck.
+Gib ausschliesslich eine valide JSON-Liste mit genau 10 Objekten zurueck.
 Jedes Objekt hat exakt diese Felder:
 {
   "prompt": "ausfuehrlicher Bildprompt",
   "start_text": "exaktes Zitat aus der Story",
-  "image_type": "cover oder story_scene",
+  "image_type": "story_scene",
   "scene_purpose": "kurzer Zweck der Szene",
   "location": "konkreter Ort",
   "characters_shown": "sichtbare Figuren mit konsistentem Aussehen",
@@ -16,10 +16,9 @@ Jedes Objekt hat exakt diese Felder:
 }
 
 Grundregeln:
-- Objekt 1 ist nur das Cover/Thumbnail. Es wird nicht als erste Videoszene genutzt. image_type ist "cover", start_text ist ein leerer String.
-- Objekte 2 bis 11 sind genau 10 konkrete Szenen aus der Story in chronologischer Reihenfolge. image_type ist "story_scene".
-- Objekt 2 ist das erste Bild im Video und muss exakt zur Hook-Szene aus dem ersten gesprochenen Satz passen.
-- Objekt 2 darf keine spaetere Gefahr, Person oder Handlung vorwegnehmen.
+- Alle 10 Objekte sind konkrete Szenen aus der Story in chronologischer Reihenfolge. image_type ist immer "story_scene".
+- Objekt 1 ist das erste Bild im Video und muss exakt zur Hook-Szene aus dem ersten gesprochenen Satz passen.
+- Objekt 1 darf keine spaetere Gefahr, Person oder Handlung vorwegnehmen.
 - Es werden keine zusaetzlichen Bilder geplant.
 
 start_text-Regeln:
@@ -29,7 +28,6 @@ start_text-Regeln:
 - start_text muss mit der sichtbaren Haupthandlung der Szene beginnen.
 - Nutze niemals eine reine Einleitung oder Ortsbeschreibung als Anker, wenn die eigentliche Handlung spaeter kommt.
 - Da es keine gesprochene Hood-Storys-Titelzeile gibt, darf kein start_text auf "Hood Storys", "Folge" oder den Videotitel zeigen.
-- Falls der User eine separate Zeile "Stadt fuer Cover/Thumbnail" mitschickt, ist diese nur fuer Objekt 1. start_text darf niemals aus dieser Zeile stammen.
 
 Abwechslung:
 - Entferne monotone Motive. Nicht jede Szene darf dunkle Strasse, Regen und Person von hinten sein.

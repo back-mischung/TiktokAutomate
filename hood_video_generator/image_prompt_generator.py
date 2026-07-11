@@ -116,7 +116,7 @@ class ImagePromptGenerator:
         prompts: list[ImagePromptSpec] = []
         for index, item in enumerate(data):
             if isinstance(item, str):
-                prompts.append(ImagePromptSpec(prompt=item, image_type="cover" if index == 0 else "story_scene"))
+                prompts.append(ImagePromptSpec(prompt=item, image_type="story_scene"))
                 continue
             if not isinstance(item, dict) or not isinstance(item.get("prompt"), str):
                 raise RuntimeError(f"Ungueltiger Bildplan an Position {index + 1}.")
@@ -127,7 +127,7 @@ class ImagePromptGenerator:
                 ImagePromptSpec(
                     prompt=item["prompt"].strip(),
                     start_text=start_text.strip(),
-                    image_type=str(item.get("image_type", "cover" if index == 0 else "story_scene")).strip(),
+                    image_type=str(item.get("image_type", "story_scene")).strip(),
                     scene_purpose=str(item.get("scene_purpose", "")).strip(),
                     location=str(item.get("location", "")).strip(),
                     characters_shown=str(item.get("characters_shown", "")).strip(),
@@ -143,7 +143,7 @@ class ImagePromptGenerator:
     def _scene_plan_item(index: int, prompt: ImagePromptSpec) -> dict:
         return {
             "image_index": index,
-            "image_type": "cover" if index == 1 else "story_scene",
+            "image_type": "story_scene",
             "start_text": prompt.start_text,
             "scene_purpose": prompt.scene_purpose,
             "location": prompt.location,

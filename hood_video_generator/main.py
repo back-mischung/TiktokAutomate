@@ -125,7 +125,7 @@ def generate_run(
     if skip_images:
         image_paths = existing_images(run_paths.images)
     else:
-        image_prompt_input = f"Stadt fuer Cover/Thumbnail: {metadata.city}\n\nGesprochene Story:\n{story_body}"
+        image_prompt_input = f"Stadt der Story: {metadata.city}\n\nGesprochene Story:\n{story_body}"
         prompt_specs = ImagePromptGenerator(
             run_paths.image_prompts,
             scene_plan_path=run_paths.image_scene_plan,
@@ -228,18 +228,14 @@ def existing_images(images_dir: Path) -> list[Path]:
         if path.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp"}
     )
     if len(paths) > settings.total_image_count:
-        cover = paths[0]
-        story_images = paths[1:]
-        needed_story_images = settings.total_image_count - 1
-        selected_story_images = [
-            story_images[round(index * (len(story_images) - 1) / (needed_story_images - 1))]
-            for index in range(needed_story_images)
+        selected = [
+            paths[round(index * (len(paths) - 1) / (settings.total_image_count - 1))]
+            for index in range(settings.total_image_count)
         ]
-        selected = [cover, *selected_story_images]
         logger.info(
-            "Vorhandener Run hat %s Bilder. Nutze Cover plus %s gleichmaessig ausgewaehlte Storybilder.",
+            "Vorhandener Run hat %s Bilder. Nutze %s gleichmaessig ausgewaehlte Storybilder.",
             len(paths),
-            needed_story_images,
+            settings.total_image_count,
         )
         return selected
     if len(paths) != settings.total_image_count:
