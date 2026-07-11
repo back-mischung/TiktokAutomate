@@ -1,51 +1,111 @@
 Schreibe eine kurze, spannende deutsche Hood-/Urban-Story fuer ein TikTok-Short-Video.
 
 LAENGE IST DAS WICHTIGSTE:
-- Ziel: 1080 bis 1150 Zeichen nur fuer den gesprochenen Storytext.
-- Erlaubter Bereich: 1050 bis 1250 Zeichen.
-- Schreibe auf keinen Fall mehr als 1250 Zeichen.
-- Plane die Story absichtlich knapp. Wenn du unsicher bist, schreibe weniger.
-- Maximal 14 kurze Saetze insgesamt nach der ersten Zeile.
-- Kein Satz darf laenger als 14 Woerter sein.
-- Halte dich kurz. Lieber zu knapp als zu lang.
-- Keine langen Beschreibungen, keine Nebenhandlungen, keine Ausschmueckungen.
+
+* Ziel: 1300 bis 1400 Zeichen nur fuer den gesprochenen Storytext.
+* Erlaubter Bereich: 1250 bis 1500 Zeichen.
+* Schreibe auf keinen Fall mehr als 1500 Zeichen.
+* Die Story muss ohne Cover-Intro lang genug sein, damit das finale Video mit Outro ueber 60 Sekunden kommt.
+* Plane die Story dicht, aber nicht zu knapp. Wenn du unsicher bist, schreibe eher 1350 Zeichen.
+* Maximal 18 kurze Saetze insgesamt.
+* Kein Satz darf laenger als 14 Woerter sein.
+* Keine langen Beschreibungen, keine Nebenhandlungen, keine Ausschmueckungen.
 
 Wichtig:
-- Die Story beginnt direkt mit Absatz 1.
-- Schreibe KEINE Zeile wie "Hood Storys aus deutschen Städten Folge [X]: [STADT]".
-- Diese Serienzeile ist nur ein Videotitel/Overlay und gehoert nicht in den gesprochenen Storytext.
-- Der erste Satz muss direkt eine spannende Handlung oder merkwuerdige Situation zeigen.
+
+* Die Story beginnt direkt mit Absatz 1.
+* Schreibe KEINE Zeile wie "Hood Storys aus deutschen Städten Folge [X]: [STADT]".
+* Diese Serienzeile ist nur ein Videotitel/Overlay und gehoert nicht in den gesprochenen Storytext.
+* Der erste Satz muss direkt eine spannende Handlung oder merkwuerdige Situation zeigen.
+
+Story-Abwechslung:
+Waehle fuer jede Story intern EINEN klaren Storytyp aus dieser Liste:
+
+* Beef zwischen zwei Jugendgruppen an einem bekannten Treffpunkt
+* Streit nach einer Party oder vor einem Club
+* Eskalation auf einem Bolzplatz, Parkplatz oder an einer Haltestelle
+* Beef wegen einem Maedchen, aber ohne sie respektlos darzustellen
+* Verrat innerhalb einer Clique
+* falsche Entschuldigung, die in eine Falle fuehrt
+* Streit wegen einem geklauten Roller, einer Jacke oder Tasche
+* Gruppe trifft zufaellig auf alte Gegner
+* jemand taucht mit der falschen Person auf
+* ein harmloser Spruch wird komplett falsch verstanden
+* eine Clique merkt zu spaet, dass sie beobachtet wird
+* jemand aus der eigenen Gruppe wechselt die Seite
+
+Vermeide Standardplots:
+
+* Keine Story, in der eine einzelne Person nur eine Nachricht aufs Handy bekommt.
+* Keine Story, in der einfach zwei Maenner jemanden verfolgen.
+* Keine generischen Verfolger ohne Grund.
+* Keine Story, die nur aus Handy, Nachricht, Rennen und Verstecken besteht.
+* Handy, Nachricht oder Anruf duerfen vorkommen, aber nur als Nebenimpuls.
+* Der Hauptkonflikt soll zwischen Personen oder Gruppen entstehen.
+
+Figuren:
+
+* Nutze meistens 2 bis 5 junge Erwachsene in einer Clique.
+* Alle Figuren sind fiktiv und mindestens 18 Jahre alt.
+* Keine echten Namen realer Personen.
+* Keine Minderjaehrigen als Taeter oder Opfer.
+* Die Gruppen sollen wie echte junge Leute wirken, nicht wie Filmgangster.
+* Konflikte duerfen hart wirken, aber realistisch bleiben.
+
+Gewalt und Gefahr:
+
+* Kaempfe, Drohungen, Gerangel und Eskalation sind erlaubt.
+* Gewalt nur kurz, hart und nicht detailliert beschreiben.
+* Keine expliziten Gore-Beschreibungen.
+* Keine detaillierten Verletzungen.
+* Keine Anleitung zu Waffen oder Gewalt.
+* Falls ein Schuss, Messer oder eine schwere Eskalation vorkommt, dann nur angedeutet und nicht ausgeschmueckt.
+* Keine Gewalt verherrlichen.
+* Die Spannung soll aus Angst, Gruppendruck, Verrat und Wendung entstehen.
 
 Aufbau:
-- Insgesamt nur 4 kurze Absaetze nach der ersten Zeile.
-- Absatz 1: Sofortiger Hook, was passiert gerade?
-- Absatz 2: Warum wird es gefaehrlich oder komisch?
-- Absatz 3: Wendung oder Drohung.
-- Absatz 4: Kurzes unangenehmes Ende oder Warnung.
-- Kein langer Rueckblick am Ende.
-- Keine Moral, keine Zusammenfassung, kein "seitdem bin ich vorsichtig".
-- Ende offen lassen.
+
+* Insgesamt genau 4 kurze Absaetze.
+* Absatz 1: Sofortiger Hook. Direkt Konflikt, Druck oder merkwuerdige Situation.
+* Absatz 2: Warum wird es gefaehrlich, peinlich oder persoenlich?
+* Absatz 3: Wendung, Verrat, Drohung oder ploetzliche Eskalation.
+* Absatz 4: Kurzes unangenehmes Ende oder offene Warnung.
+* Kein langer Rueckblick am Ende.
+* Keine Moral.
+* Keine Zusammenfassung.
+* Kein "seitdem bin ich vorsichtig".
+* Ende offen lassen.
 
 Stil:
-Duester, realistisch, jugendlich, direkt, TikTok-Storytime. Es klingt wie ein junger Typ, der es seinen Zuschauern erzaehlt.
+Duester, realistisch, jugendlich, direkt, TikTok-Storytime.
+Es klingt wie ein junger Typ, der es seinen Zuschauern erzaehlt.
 
 Sprache:
-- Nutze natuerliche Jugendsprache: "Bruder", "Bro", "Digga", "safe", "ernst", "ich schwoere", "komplett verrueckt".
-- Kurze Saetze.
-- Keine literarische Sprache.
-- Keine altmodischen Woerter.
-- Verbotene Woerter: "krawallgebuerstet", "Halbstarke", "finstere Gestalten", "Raufbolde", "Gauner", "Gesindel".
+
+* Natuerliche Jugendsprache, aber nicht uebertreiben.
+* Nutze maximal 3 dieser Woerter pro Story: "Bruder", "Bro", "Digga", "safe", "ernst", "ich schwoere", "komplett verrueckt".
+* Kurze Saetze.
+* Keine literarische Sprache.
+* Keine altmodischen Woerter.
+* Verbotene Woerter: "krawallgebuerstet", "Halbstarke", "finstere Gestalten", "Raufbolde", "Gauner", "Gesindel".
 
 Ort:
-Waehle zufaellig eine Stadt in Deutschland mit mindestens 50.000 Einwohnern. Nutze 2 bis 3 echte lokale Orte oder Strassen, aber nur kurz und natuerlich in der Handlung.
+Waehle zufaellig eine Stadt in Deutschland mit mindestens 50.000 Einwohnern.
+Nutze 2 bis 3 echte lokale Orte oder Strassen, aber nur kurz und natuerlich in der Handlung.
+Die Orte sollen Teil der Handlung sein, nicht nur Deko.
 
 Perspektive:
 Ich- oder Wir-Erzaehler.
+Bei Gruppengeschichten bevorzugt Wir-Erzaehler.
 
 Regeln:
-- Keine Erklaerung.
-- Keine Ueberschrift.
-- Keine Titelzeile.
-- Keine expliziten Gore-Beschreibungen.
-- Kein langsamer Einstieg.
-- Alle 5 bis 8 Sekunden muss etwas passieren.
+
+* Keine Erklaerung.
+* Keine Ueberschrift.
+* Keine Titelzeile.
+* Kein langsamer Einstieg.
+* Alle 5 bis 8 Sekunden muss etwas Neues passieren.
+* Jede Story braucht mindestens eine Wendung.
+* Jede Story braucht mindestens einen Moment mit Gruppendruck oder Loyalitaetskonflikt.
+* Die Story soll sich nicht wie ein Polizeibericht anfuehlen.
+* Die Story soll sich wie eine echte TikTok-Erzaehlung aus einer Clique anfuehlen.

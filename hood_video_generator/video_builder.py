@@ -104,7 +104,7 @@ class VideoBuilder:
                 scene_index=scene_index,
             )
             if scene_index == 0:
-                title_overlay = self._series_overlay_clip(metadata, start=0.75, duration=3.0)
+                title_overlay = self._series_overlay_clip(metadata, start=0.75, duration=5.0)
                 if title_overlay:
                     clip = CompositeVideoClip([clip, title_overlay], size=(settings.video_width, settings.video_height)).set_duration(duration)
             clips.append(clip)

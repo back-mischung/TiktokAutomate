@@ -78,14 +78,14 @@ class StoryGenerator:
     def _first_attempt_prompt(self, base_prompt: str) -> str:
         return (
             f"{base_prompt}\n\n"
-            "WICHTIGER LAENGENPUFFER: Ziele intern auf etwa 1000 Zeichen, "
-            "damit die fertige Ausgabe sicher unter 1250 Zeichen bleibt."
+            f"WICHTIGER LAENGENPUFFER: Ziele intern auf etwa {settings.story_target_chars} Zeichen, "
+            f"damit die fertige Ausgabe sicher zwischen {settings.story_min_chars} und {settings.story_max_chars} Zeichen liegt."
         )
 
     def _correction_prompt(self, base_prompt: str, previous_story: str, reason: str, attempt: int) -> str:
         current_length = len(previous_story)
         if current_length > settings.story_max_chars:
-            target = max(850, settings.story_target_chars - (attempt * 120))
+            target = max(settings.story_min_chars, settings.story_target_chars - (attempt * 60))
             length_rule = (
                 f"Die letzte Story hatte {current_length} Zeichen und war zu lang. "
                 f"Schreibe diesmal deutlich kuerzer: Ziel {target} bis {target + 120} Zeichen, "
@@ -94,7 +94,7 @@ class StoryGenerator:
         elif current_length < settings.story_min_chars:
             length_rule = (
                 f"Die letzte Story hatte {current_length} Zeichen und war zu kurz. "
-                f"Schreibe diesmal etwas laenger: Ziel {settings.story_min_chars} bis {settings.story_target_chars} Zeichen."
+                f"Schreibe diesmal laenger: Ziel {settings.story_target_chars} bis {settings.story_max_chars - 50} Zeichen."
             )
         else:
             length_rule = (
