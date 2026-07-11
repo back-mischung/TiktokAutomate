@@ -20,6 +20,13 @@ class StoryMetadata:
     story_start_seconds: float = 0.0
     cover_duration_seconds: float = 0.0
     transition_duration_seconds: float = 0.0
+    caption_text: str = ""
+    city_hashtag: str = ""
+    city_story_hashtag: str = ""
+    used_hashtags: tuple[str, ...] = ()
+    used_local_mentions: tuple[str, ...] = ()
+    caption_hook: str = ""
+    caption_question: str = ""
 
 
 def split_story_header(story: str) -> tuple[StoryMetadata, str]:
@@ -56,6 +63,13 @@ def load_metadata(path: Path) -> StoryMetadata | None:
         story_start_seconds=float(data.get("story_start_seconds", 0.0)),
         cover_duration_seconds=float(data.get("cover_duration_seconds", 0.0)),
         transition_duration_seconds=float(data.get("transition_duration_seconds", 0.0)),
+        caption_text=normalize_text(str(data.get("caption_text", ""))),
+        city_hashtag=normalize_text(str(data.get("city_hashtag", ""))),
+        city_story_hashtag=normalize_text(str(data.get("city_story_hashtag", ""))),
+        used_hashtags=tuple(str(value) for value in data.get("used_hashtags", [])),
+        used_local_mentions=tuple(str(value) for value in data.get("used_local_mentions", [])),
+        caption_hook=normalize_text(str(data.get("caption_hook", ""))),
+        caption_question=normalize_text(str(data.get("caption_question", ""))),
     )
 
 

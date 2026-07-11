@@ -130,8 +130,8 @@ def generate_run(
     if len(image_paths) != settings.total_image_count:
         raise RuntimeError(f"Fuer den Video-Bau werden genau {settings.total_image_count} Bilder benoetigt.")
 
+    metadata = generate_caption(metadata, run_paths.caption, story_body)
     save_metadata(run_paths.metadata, metadata)
-    generate_caption(metadata, run_paths.caption)
     subtitle_audio = run_paths.story_voiceover_timed if run_paths.story_voiceover_timed.exists() else audio_path
     SubtitleGenerator().generate_srt(
         story_body,
@@ -172,14 +172,7 @@ def build_video_from_existing(run_paths: RunPaths) -> None:
     metadata, story_body = split_story_header(story)
     saved_metadata = load_metadata(run_paths.metadata)
     if saved_metadata:
-        metadata = StoryMetadata(
-            episode_number=metadata.episode_number,
-            city=metadata.city,
-            cover_text=metadata.cover_text,
-            story_start_seconds=saved_metadata.story_start_seconds,
-            cover_duration_seconds=saved_metadata.cover_duration_seconds,
-            transition_duration_seconds=saved_metadata.transition_duration_seconds,
-        )
+        metadata = saved_metadata
     subtitle_audio = run_paths.story_voiceover_timed if run_paths.story_voiceover_timed.exists() else run_paths.voiceover
     SubtitleGenerator().generate_srt(
         story_body,
@@ -189,8 +182,8 @@ def build_video_from_existing(run_paths: RunPaths) -> None:
         alignment_path=run_paths.story_alignment,
         tempo_factor=settings.voice_speed,
     )
+    metadata = generate_caption(metadata, run_paths.caption, story_body)
     save_metadata(run_paths.metadata, metadata)
-    generate_caption(metadata, run_paths.caption)
     VideoBuilder().build_video(
         image_paths,
         run_paths.voiceover,
