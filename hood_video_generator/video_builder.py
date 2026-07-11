@@ -35,12 +35,14 @@ class VideoBuilder:
             raise RuntimeError(f"Es werden genau {settings.total_image_count} Bilder erwartet, gefunden: {len(image_paths)}")
         audio = AudioFileClip(str(audio_path))
         metadata = load_metadata(metadata_path) if metadata_path else None
+        visual_beats_path = metadata_path.parent / "visual_beats.json" if metadata_path else None
         clips = self._build_visual_clips(
             image_paths,
             audio.duration,
             metadata,
             image_prompts_path,
             alignment_path,
+            visual_beats_path,
         )
         base = concatenate_videoclips(clips, method="compose", padding=0)
         audio = self._mix_background_music(audio)
@@ -69,6 +71,7 @@ class VideoBuilder:
         metadata: StoryMetadata | None,
         image_prompts_path: Path | None = None,
         alignment_path: Path | None = None,
+        visual_beats_path: Path | None = None,
     ) -> list[VideoClip]:
         outro = None
         if settings.outro_enabled:
@@ -84,10 +87,23 @@ class VideoBuilder:
             image_prompts_path,
             alignment_path,
         )
+        visual_beats = self._load_or_create_visual_beats(
+            story_images,
+            image_schedule,
+            story_duration,
+            image_prompts_path,
+            visual_beats_path,
+        )
         clips: list[VideoClip] = []
-        for animation_index, (image_index, duration) in enumerate(image_schedule):
-            clip = self._ken_burns_clip(story_images[image_index], duration, animation_index)
-            if animation_index == 0:
+        for scene_index, (image_index, duration) in enumerate(image_schedule):
+            scene_beats = [beat for beat in visual_beats if int(beat["scene_index"]) == scene_index]
+            clip = self._render_scene_with_visual_beats(
+                story_images[image_index],
+                scene_beats,
+                scene_duration=duration,
+                scene_index=scene_index,
+            )
+            if scene_index == 0:
                 title_overlay = self._series_overlay_clip(metadata, start=0.75, duration=1.2)
                 if title_overlay:
                     clip = CompositeVideoClip([clip, title_overlay], size=(settings.video_width, settings.video_height)).set_duration(duration)
@@ -149,6 +165,204 @@ class VideoBuilder:
         except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
             logger.warning("Szenen-Timing konnte nicht geladen werden: %s", exc)
             return fallback
+
+    def _load_or_create_visual_beats(
+        self,
+        story_images: list[Path],
+        image_schedule: list[tuple[int, float]],
+        story_duration: float,
+        image_prompts_path: Path | None,
+        visual_beats_path: Path | None,
+    ) -> list[dict]:
+        if visual_beats_path and visual_beats_path.exists():
+            try:
+                existing = json.loads(visual_beats_path.read_text(encoding="utf-8"))
+                if self._visual_beats_match(existing, len(story_images), story_duration):
+                    logger.info("Nutze vorhandenen visuellen Schnittplan: %s", visual_beats_path)
+                    return existing
+            except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
+                logger.warning("visual_beats.json konnte nicht wiederverwendet werden: %s", exc)
+
+        prompt_plan = self._load_image_prompt_plan(image_prompts_path)
+        beats = self._build_dynamic_shot_plan(story_images, image_schedule, prompt_plan)
+        if visual_beats_path:
+            visual_beats_path.write_text(json.dumps(beats, ensure_ascii=False, indent=2), encoding="utf-8")
+            logger.info("Visueller Schnittplan gespeichert: %s", visual_beats_path)
+        return beats
+
+    @staticmethod
+    def _visual_beats_match(beats: list[dict], scene_count: int, story_duration: float) -> bool:
+        if not isinstance(beats, list) or not beats:
+            return False
+        scene_indices = {int(beat.get("scene_index", -1)) for beat in beats}
+        if scene_indices != set(range(scene_count)):
+            return False
+        max_end = max(float(beat.get("end_time", 0.0)) for beat in beats)
+        return abs(max_end - story_duration) < 0.2
+
+    @staticmethod
+    def _load_image_prompt_plan(image_prompts_path: Path | None) -> list[dict]:
+        if not image_prompts_path or not image_prompts_path.exists():
+            return []
+        try:
+            plan = json.loads(image_prompts_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return []
+        return plan if isinstance(plan, list) else []
+
+    def _build_dynamic_shot_plan(
+        self,
+        story_images: list[Path],
+        image_schedule: list[tuple[int, float]],
+        prompt_plan: list[dict],
+    ) -> list[dict]:
+        beats: list[dict] = []
+        scene_start = 0.0
+        for scene_index, (image_index, scene_duration) in enumerate(image_schedule):
+            prompt_item = prompt_plan[image_index + 1] if len(prompt_plan) > image_index + 1 else {}
+            scene_text = " ".join(
+                [
+                    str(prompt_item.get("start_text", "")) if isinstance(prompt_item, dict) else "",
+                    str(prompt_item.get("prompt", "")) if isinstance(prompt_item, dict) else "",
+                ]
+            )
+            intense = contains_signal_word(scene_text)
+            scene_beats = self.create_visual_beats_for_scene(
+                scene_index=scene_index,
+                source_image=story_images[image_index],
+                scene_start=scene_start,
+                scene_duration=scene_duration,
+                intense=intense,
+            )
+            beats.extend(scene_beats)
+            scene_start += scene_duration
+        return beats
+
+    @staticmethod
+    def create_visual_beats_for_scene(
+        scene_index: int,
+        source_image: Path,
+        scene_start: float,
+        scene_duration: float,
+        intense: bool,
+    ) -> list[dict]:
+        if scene_duration < 2.8:
+            beat_count = 1
+        elif scene_duration < 5.8:
+            beat_count = 2
+        else:
+            beat_count = 3
+
+        effect_cycle = [
+            ("establishing", "in", "center", 1.00, 1.045),
+            ("push_in", "in", "right", 1.055, 1.115),
+            ("tight_pan", "out", "left", 1.115, 1.075),
+        ]
+        if intense and beat_count >= 2:
+            effect_cycle[1] = ("shock_push", "in", "up", 1.065, 1.155)
+
+        beats: list[dict] = []
+        elapsed = 0.0
+        for beat_index in range(beat_count):
+            remaining = scene_duration - elapsed
+            beat_duration = remaining if beat_index == beat_count - 1 else scene_duration / beat_count
+            start = scene_start + elapsed
+            end = scene_start + elapsed + beat_duration
+            effect_type, zoom_direction, pan_direction, zoom_start, zoom_end = effect_cycle[beat_index]
+            intensity = "strong" if intense and beat_index == 1 else "medium" if beat_index else "subtle"
+            beats.append(
+                {
+                    "scene_index": scene_index,
+                    "source_image": str(source_image),
+                    "start_time": round(start, 3),
+                    "end_time": round(end, 3),
+                    "effect_type": effect_type,
+                    "crop_start": safe_crop_for(pan_direction, zoom_start),
+                    "crop_end": safe_crop_for(pan_direction, zoom_end),
+                    "zoom_start": zoom_start,
+                    "zoom_end": zoom_end,
+                    "pan_direction": pan_direction,
+                    "intensity": intensity,
+                }
+            )
+            elapsed += beat_duration
+        return beats
+
+    def _render_scene_with_visual_beats(
+        self,
+        image_path: Path,
+        beats: list[dict],
+        scene_duration: float,
+        scene_index: int,
+    ) -> VideoClip:
+        if not beats:
+            return self._ken_burns_clip(image_path, scene_duration, scene_index)
+        scene_start = min(float(beat["start_time"]) for beat in beats)
+        subclips: list[VideoClip] = []
+        for local_index, beat in enumerate(beats):
+            duration = max(0.05, float(beat["end_time"]) - float(beat["start_time"]))
+            relative_start = float(beat["start_time"]) - scene_start
+            subclip = self.apply_ken_burns_effect(
+                image_path=image_path,
+                duration=duration,
+                beat=beat,
+                local_index=local_index,
+            )
+            if relative_start > 0.01:
+                subclip = subclip.set_start(relative_start)
+            subclips.append(subclip)
+        scene = concatenate_videoclips(subclips, method="compose", padding=0).set_duration(scene_duration)
+        if scene_index > 0 or any(beat.get("intensity") == "strong" for beat in beats):
+            scene = self._sanguine_flash(scene, settings.transition_duration)
+        return scene
+
+    def apply_ken_burns_effect(self, image_path: Path, duration: float, beat: dict, local_index: int) -> VideoClip:
+        width, height = settings.video_width, settings.video_height
+        base = ImageClip(str(image_path)).resize(height=height)
+        if base.w < width:
+            base = base.resize(width=width)
+        zoom_start = float(beat.get("zoom_start", 1.0))
+        zoom_end = float(beat.get("zoom_end", 1.06))
+        pan_direction = str(beat.get("pan_direction", "center"))
+        effect_type = str(beat.get("effect_type", "push_in"))
+        intensity = str(beat.get("intensity", "subtle"))
+
+        def position(t: float) -> tuple[float, float]:
+            progress = min(1.0, max(0.0, t / max(duration, 0.01)))
+            zoom = zoom_start + (zoom_end - zoom_start) * smoothstep(progress)
+            scaled_w = base.w * zoom
+            scaled_h = base.h * zoom
+            safe_x = (scaled_w - width) / 2
+            safe_y = (scaled_h - height) / 2
+            pan_x, pan_y = pan_offsets(pan_direction, safe_x, safe_y, progress)
+            if effect_type == "shock_push" and intensity == "strong":
+                shake = math.sin(t * 42.0) * max(0.0, 1.0 - progress) * 5.0
+                pan_x += shake
+            return (-safe_x + pan_x, -safe_y + pan_y)
+
+        clip = base.resize(
+            lambda t: zoom_start + (zoom_end - zoom_start) * smoothstep(min(1.0, max(0.0, t / max(duration, 0.01))))
+        ).set_position(position)
+        canvas = CompositeVideoClip([clip], size=(width, height)).set_duration(duration)
+        if effect_type == "shock_push":
+            canvas = self._shock_impulse(canvas, duration)
+        return canvas
+
+    @staticmethod
+    def _shock_impulse(clip: VideoClip, duration: float) -> VideoClip:
+        effect_duration = min(0.35, duration)
+
+        def effect(get_frame, t: float):
+            frame = get_frame(t).astype(np.float32)
+            if t > effect_duration:
+                return frame.astype(np.uint8)
+            progress = t / max(effect_duration, 0.01)
+            pulse = math.sin(progress * math.pi) * 0.18
+            frame *= 1.0 + pulse
+            frame[..., 0] += 28.0 * pulse
+            return np.clip(frame, 0, 255).astype(np.uint8)
+
+        return clip.fl(effect).set_duration(duration)
 
     def _ken_burns_clip(self, image_path: Path, duration: float, index: int) -> VideoClip:
         width, height = settings.video_width, settings.video_height
@@ -476,6 +690,73 @@ def wrap_text(text: str, font: ImageFont.ImageFont, max_width: int) -> list[str]
     if current:
         lines.append(current)
     return lines[:3] if len(lines) > 3 else lines
+
+
+SIGNAL_WORDS = [
+    "plötzlich",
+    "ploetzlich",
+    "auf einmal",
+    "dann",
+    "aber",
+    "ich schwöre",
+    "ich schwoere",
+    "bruder",
+    "digga",
+    "nachricht",
+    "anruf",
+    "stimme",
+    "schatten",
+    "kennzeichen",
+    "tür",
+    "tuer",
+    "polizei",
+    "rannte",
+    "stand da",
+    "sah mich an",
+]
+
+
+def contains_signal_word(value: str) -> bool:
+    normalized = value.lower()
+    return any(signal in normalized for signal in SIGNAL_WORDS)
+
+
+def smoothstep(progress: float) -> float:
+    progress = max(0.0, min(1.0, progress))
+    return progress * progress * (3.0 - 2.0 * progress)
+
+
+def pan_offsets(direction: str, safe_x: float, safe_y: float, progress: float) -> tuple[float, float]:
+    progress = smoothstep(progress)
+    x_strength = min(34.0, safe_x * 0.42)
+    y_strength = min(28.0, safe_y * 0.28)
+    if direction == "left":
+        return (x_strength * (1.0 - 2.0 * progress), 0.0)
+    if direction == "right":
+        return (-x_strength * (1.0 - 2.0 * progress), 0.0)
+    if direction == "up":
+        return (0.0, y_strength * (1.0 - 2.0 * progress))
+    if direction == "down":
+        return (0.0, -y_strength * (1.0 - 2.0 * progress))
+    return (0.0, 0.0)
+
+
+def safe_crop_for(direction: str, zoom: float) -> dict:
+    margin_x = round(min(0.08, max(0.0, (zoom - 1.0) * 0.35)), 4)
+    margin_top = round(min(0.07, max(0.0, (zoom - 1.0) * 0.28)), 4)
+    margin_bottom = round(min(0.04, max(0.0, (zoom - 1.0) * 0.18)), 4)
+    center_shift = {
+        "left": -0.035,
+        "right": 0.035,
+        "up": -0.025,
+        "down": 0.02,
+    }.get(direction, 0.0)
+    return {
+        "x_min": round(0.5 - margin_x + (center_shift if direction in {"left", "right"} else 0.0), 4),
+        "x_max": round(0.5 + margin_x + (center_shift if direction in {"left", "right"} else 0.0), 4),
+        "y_min": round(0.5 - margin_top + (center_shift if direction in {"up", "down"} else 0.0), 4),
+        "y_max": round(0.5 + margin_bottom + (center_shift if direction in {"up", "down"} else 0.0), 4),
+    }
 
 
 def resolve_asset(value: str) -> Path:
