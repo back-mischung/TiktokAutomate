@@ -136,7 +136,11 @@ def evaluate_quality(run_paths: RunPaths, metadata: StoryMetadata, story_text: s
     local_places = extract_local_places(story_text, metadata.city)
     penalize(len(local_places) < 2, 8, "Weniger als 2 lokale Orte oder Strassen erkannt.")
     image_count = count_images(run_paths.images)
-    penalize(image_count != settings.total_image_count, 15, f"Erwartet 8 Bilder, gefunden: {image_count}.")
+    penalize(
+        image_count != settings.total_image_count,
+        15,
+        f"Erwartet {settings.total_image_count} Bilder, gefunden: {image_count}.",
+    )
     penalize(not run_paths.story_voiceover.exists(), 10, "Story-Voiceover fehlt.")
     penalize(not run_paths.subtitles_srt.exists(), 8, "Untertitel-Datei fehlt.")
     penalize(not run_paths.final_video.exists(), 15, "Finale MP4 fehlt.")
@@ -254,7 +258,7 @@ def image_prompt_warnings(path: Path) -> list[str]:
     except json.JSONDecodeError:
         return ["image_prompts.json ist kein valides JSON."]
     if not isinstance(plan, list) or len(plan) != settings.total_image_count:
-        return ["Bildplan hat nicht genau 8 Objekte."]
+        return [f"Bildplan hat nicht genau {settings.total_image_count} Objekte."]
     anchors = [str(item.get("start_text", "")).strip() for item in plan[1:] if isinstance(item, dict)]
     warnings = []
     if any(not anchor for anchor in anchors):

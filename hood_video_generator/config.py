@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     image_quality: str = Field(default="low", alias="IMAGE_QUALITY")
     image_output_format: str = Field(default="jpeg", alias="IMAGE_OUTPUT_FORMAT")
     image_output_compression: int = Field(default=75, alias="IMAGE_OUTPUT_COMPRESSION")
-    total_image_count: int = Field(default=8, alias="TOTAL_IMAGE_COUNT")
+    total_image_count: int = Field(default=11, alias="TOTAL_IMAGE_COUNT")
     openai_text_input_usd_per_1m: float = Field(default=0.75, alias="OPENAI_TEXT_INPUT_USD_PER_1M")
     openai_text_output_usd_per_1m: float = Field(default=4.50, alias="OPENAI_TEXT_OUTPUT_USD_PER_1M")
     openai_image_estimated_usd_per_image: float = Field(default=0.011, alias="OPENAI_IMAGE_ESTIMATED_USD_PER_IMAGE")

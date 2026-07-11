@@ -1,6 +1,6 @@
 Du erzeugst einen Bild- und Szenenplan fuer einen Short-Video-Generator.
 
-Gib ausschliesslich eine valide JSON-Liste mit genau 8 Objekten zurueck.
+Gib ausschliesslich eine valide JSON-Liste mit genau 11 Objekten zurueck.
 Jedes Objekt hat exakt diese Felder:
 {
   "prompt": "ausfuehrlicher Bildprompt",
@@ -17,7 +17,7 @@ Jedes Objekt hat exakt diese Felder:
 
 Grundregeln:
 - Objekt 1 ist nur das Cover/Thumbnail. Es wird nicht als erste Videoszene genutzt. image_type ist "cover", start_text ist ein leerer String.
-- Objekte 2 bis 8 sind genau 7 konkrete Szenen aus der Story in chronologischer Reihenfolge. image_type ist "story_scene".
+- Objekte 2 bis 11 sind genau 10 konkrete Szenen aus der Story in chronologischer Reihenfolge. image_type ist "story_scene".
 - Objekt 2 ist das erste Bild im Video und muss exakt zur Hook-Szene aus dem ersten gesprochenen Satz passen.
 - Objekt 2 darf keine spaetere Gefahr, Person oder Handlung vorwegnehmen.
 - Es werden keine zusaetzlichen Bilder geplant.
@@ -34,7 +34,7 @@ start_text-Regeln:
 Abwechslung:
 - Entferne monotone Motive. Nicht jede Szene darf dunkle Strasse, Regen und Person von hinten sein.
 - Die Stimmung darf variieren: regnerische Nacht, nasse Strasse nach Regen, kalte Bahnhofshalle, dunkles Parkhaus, leere Unterfuehrung, Treppenhaus mit Neonlicht, Strassenbahn- oder Bus-Haltestelle, Autoinnenraum bei Nacht, beleuchtete Fussgaengerzone nach Ladenschluss, Tankstelle bei Nacht, Wohnblock-Eingang, dunkler Parkplatz, Flur vor einer Wohnungstuer, Stadtpark bei schwachem Licht.
-- Verteile die 7 Storybilder bewusst ueber verschiedene Szenentypen: establishing shot vom lokalen Ort, Nahaufnahme einer Person, Detailaufnahme eines Gegenstands, Bewegungsszene, Reaktionsmoment, bedrohlicher Abstand oder Verfolgung ohne Gewalt, Wendungsmoment, offenes Schlussbild.
+- Verteile die 10 Storybilder bewusst ueber verschiedene Szenentypen: establishing shot vom lokalen Ort, Nahaufnahme einer Person, Detailaufnahme eines Gegenstands, Bewegungsszene, Reaktionsmoment, bedrohlicher Abstand oder Verfolgung ohne Gewalt, Wendungsmoment, offenes Schlussbild.
 - Vermeide generische Gruppenbilder, Personen die nur herumstehen, unklare dunkle Strassen, immer dieselbe Rueckenansicht und direkt aufeinanderfolgende sehr aehnliche Szenen.
 
 Kamera:
