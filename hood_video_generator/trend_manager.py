@@ -55,6 +55,7 @@ def apply_trend_experiment(run_paths: RunPaths, metadata: StoryMetadata, story_t
         existing = json.loads(run_paths.trend_usage.read_text(encoding="utf-8"))
         return replace(
             metadata,
+            trend_experiment_applied=bool(existing.get("trend_experiment_applied", False)),
             is_trend_experiment=bool(existing.get("trend_experiment_applied", False)),
             trend_id=str(existing.get("trend_id", "")),
             trend_type=str(existing.get("trend_type", "")),
@@ -66,6 +67,7 @@ def apply_trend_experiment(run_paths: RunPaths, metadata: StoryMetadata, story_t
     run_paths.trend_usage.write_text(json.dumps(usage, ensure_ascii=False, indent=2), encoding="utf-8")
     metadata = replace(
         metadata,
+        trend_experiment_applied=bool(usage["trend_experiment_applied"]),
         is_trend_experiment=bool(usage["trend_experiment_applied"]),
         trend_id=str(usage.get("trend_id", "")),
         trend_type=str(usage.get("trend_type", "")),

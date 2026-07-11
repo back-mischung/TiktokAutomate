@@ -87,13 +87,33 @@ def create_or_update_posting_plan(
         "hashtags": hashtags,
         "is_ready_for_tiktok_draft_upload": quality_score >= 60,
         "status": status,
+        "trend_experiment_applied": metadata.trend_experiment_applied or metadata.is_trend_experiment,
         "is_trend_experiment": metadata.is_trend_experiment,
         "trend_id": metadata.trend_id,
         "trend_type": metadata.trend_type,
     }
     run_paths.posting_plan.write_text(json.dumps(plan, ensure_ascii=False, indent=2), encoding="utf-8")
     update_weekly_posting_plan(run_paths.weekly_posting_plan, run_paths.root.parent)
-    metadata = replace(metadata, hook_category=hook_category)
+    metadata = replace(
+        metadata,
+        run_id=run_paths.run_id,
+        bundesland=state_for_city(metadata.city),
+        created_at=metadata.created_at or datetime.now().isoformat(timespec="seconds"),
+        planned_post_date=slot["date"],
+        planned_post_time=slot["time"],
+        video_length_seconds=round(video_length, 2),
+        story_length_chars=len(story_text),
+        hook_text=hook_text,
+        hook_category=hook_category,
+        story_type=hook_category,
+        local_places_used=tuple(extract_local_places(story_text, metadata.city)),
+        hashtags=tuple(hashtags),
+        subtitle_mode=settings.subtitle_mode,
+        trend_experiment_applied=metadata.trend_experiment_applied or metadata.is_trend_experiment,
+        quality_score=quality_score,
+        final_video_path=str(run_paths.final_video),
+        manual_upload_status=metadata.manual_upload_status or "generated",
+    )
     save_metadata(run_paths.metadata, metadata)
     return metadata
 

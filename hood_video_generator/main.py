@@ -2,6 +2,7 @@
 
 import argparse
 import logging
+from dataclasses import replace
 from pathlib import Path
 
 from moviepy.editor import AudioClip, AudioFileClip, CompositeAudioClip, afx, concatenate_audioclips
@@ -276,10 +277,8 @@ def build_audio_track(run_paths: RunPaths, metadata: StoryMetadata, story_text: 
         voice_track.duration,
     )
     cover_duration = 0.0
-    updated_metadata = StoryMetadata(
-        episode_number=metadata.episode_number,
-        city=metadata.city,
-        cover_text=metadata.cover_text,
+    updated_metadata = replace(
+        metadata,
         story_start_seconds=cover_duration,
         cover_duration_seconds=cover_duration,
         transition_duration_seconds=0.0,
