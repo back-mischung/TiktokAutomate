@@ -31,6 +31,8 @@ class RunPaths:
     metadata: Path
     usage_report: Path
     caption: Path
+    posting_plan: Path
+    weekly_posting_plan: Path
     final_video: Path
 
 
@@ -91,5 +93,7 @@ class FileManager:
             metadata=root / "metadata.json",
             usage_report=root / "usage_report.json",
             caption=root / "caption.txt",
+            posting_plan=root / "posting_plan.json",
+            weekly_posting_plan=self.output_dir / "weekly_posting_plan.json",
             final_video=root / "final_video.mp4",
         )

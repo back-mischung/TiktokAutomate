@@ -12,6 +12,7 @@ from config import configure_logging, settings
 from file_manager import FileManager, RunPaths
 from image_generator import ImageGenerator
 from image_prompt_generator import ImagePromptGenerator
+from posting_planner import create_or_update_posting_plan
 from story_generator import StoryGenerator
 from story_metadata import StoryMetadata, load_metadata, save_metadata, split_story_header
 from subtitle_generator import SubtitleGenerator
@@ -38,6 +39,7 @@ def main() -> None:
 
     build = subparsers.add_parser("build", help="Video aus vorhandenem Run bauen")
     build.add_argument("--run-id", required=True, help="Run-ID, z. B. 2026-06-09_001")
+    build.add_argument("--refresh-posting-plan", action="store_true", help="posting_plan.json beim Reschnitt neu berechnen")
 
     args = parser.parse_args()
     manager = FileManager(settings.resolved_output_dir)
@@ -61,7 +63,7 @@ def main() -> None:
         )
     elif args.command == "build":
         run_paths = manager.get_run(args.run_id)
-        build_video_from_existing(run_paths)
+        build_video_from_existing(run_paths, refresh_posting_plan=args.refresh_posting_plan)
 
 
 def generate_run(
@@ -150,11 +152,13 @@ def generate_run(
         run_paths.image_prompts,
         run_paths.story_alignment,
     )
+    metadata = create_or_update_posting_plan(run_paths, metadata, story_body, overwrite=True)
+    save_metadata(run_paths.metadata, metadata)
     usage_tracker.save()
     logger.info("Finished video: %s", run_paths.final_video)
 
 
-def build_video_from_existing(run_paths: RunPaths) -> None:
+def build_video_from_existing(run_paths: RunPaths, refresh_posting_plan: bool = False) -> None:
     image_paths = existing_images(run_paths.images)
     if not run_paths.voiceover.exists():
         raise RuntimeError(f"Voiceover fehlt: {run_paths.voiceover}")
@@ -193,6 +197,13 @@ def build_video_from_existing(run_paths: RunPaths) -> None:
         run_paths.image_prompts,
         run_paths.story_alignment,
     )
+    metadata = create_or_update_posting_plan(
+        run_paths,
+        metadata,
+        story_body,
+        overwrite=refresh_posting_plan or not run_paths.posting_plan.exists(),
+    )
+    save_metadata(run_paths.metadata, metadata)
 
 
 def existing_images(images_dir: Path) -> list[Path]:

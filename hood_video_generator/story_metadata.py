@@ -27,6 +27,7 @@ class StoryMetadata:
     used_local_mentions: tuple[str, ...] = ()
     caption_hook: str = ""
     caption_question: str = ""
+    hook_category: str = ""
 
 
 def split_story_header(story: str) -> tuple[StoryMetadata, str]:
@@ -70,6 +71,7 @@ def load_metadata(path: Path) -> StoryMetadata | None:
         used_local_mentions=tuple(str(value) for value in data.get("used_local_mentions", [])),
         caption_hook=normalize_text(str(data.get("caption_hook", ""))),
         caption_question=normalize_text(str(data.get("caption_question", ""))),
+        hook_category=normalize_text(str(data.get("hook_category", ""))),
     )
 
 
