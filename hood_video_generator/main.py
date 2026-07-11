@@ -17,6 +17,7 @@ from sound_design import SoundDesigner
 from story_generator import StoryGenerator
 from story_metadata import StoryMetadata, load_metadata, save_metadata, split_story_header
 from subtitle_generator import SubtitleGenerator
+from trend_manager import apply_trend_experiment
 from usage_tracker import UsageTracker
 from video_builder import VideoBuilder
 from voice_generator import VoiceGenerator
@@ -141,6 +142,7 @@ def generate_run(
     log_audio_duration(audio_path)
 
     metadata = generate_caption(metadata, run_paths.caption, story_body)
+    metadata = apply_trend_experiment(run_paths, metadata, story_body, overwrite=True)
     save_metadata(run_paths.metadata, metadata)
     subtitle_audio = run_paths.story_voiceover_timed if run_paths.story_voiceover_timed.exists() else audio_path
     SubtitleGenerator().generate_srt(
@@ -199,6 +201,7 @@ def build_video_from_existing(run_paths: RunPaths, refresh_posting_plan: bool = 
         image_prompts_path=run_paths.image_prompts,
     )
     metadata = generate_caption(metadata, run_paths.caption, story_body)
+    metadata = apply_trend_experiment(run_paths, metadata, story_body, overwrite=not run_paths.trend_usage.exists())
     save_metadata(run_paths.metadata, metadata)
     VideoBuilder().build_video(
         image_paths,

@@ -1,0 +1,21 @@
+{
+  "trend_experiments_enabled": true,
+  "trend_experiment_ratio": 0.2,
+  "allowed_trend_types": [
+    "subtitle_style",
+    "intro_overlay",
+    "transition_style",
+    "sound_style",
+    "comment_reply_style",
+    "search_hook_style"
+  ],
+  "blocked_trend_types": [
+    "dangerous_challenges",
+    "real_crime_claims",
+    "political_ragebait",
+    "fake_news",
+    "harassment",
+    "minor_related_content"
+  ],
+  "active_trends": []
+}

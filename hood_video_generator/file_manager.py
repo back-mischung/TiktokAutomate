@@ -36,6 +36,8 @@ class RunPaths:
     posting_plan: Path
     weekly_posting_plan: Path
     sound_plan: Path
+    trend_usage: Path
+    trend_config: Path
     final_video: Path
 
 
@@ -101,5 +103,7 @@ class FileManager:
             posting_plan=root / "posting_plan.json",
             weekly_posting_plan=self.output_dir / "weekly_posting_plan.json",
             sound_plan=root / "sound_plan.json",
+            trend_usage=root / "trend_usage.json",
+            trend_config=self.output_dir.parent / "trend_config.json",
             final_video=root / "final_video.mp4",
         )

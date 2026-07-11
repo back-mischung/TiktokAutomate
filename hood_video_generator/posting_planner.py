@@ -87,6 +87,9 @@ def create_or_update_posting_plan(
         "hashtags": hashtags,
         "is_ready_for_tiktok_draft_upload": quality_score >= 60,
         "status": status,
+        "is_trend_experiment": metadata.is_trend_experiment,
+        "trend_id": metadata.trend_id,
+        "trend_type": metadata.trend_type,
     }
     run_paths.posting_plan.write_text(json.dumps(plan, ensure_ascii=False, indent=2), encoding="utf-8")
     update_weekly_posting_plan(run_paths.weekly_posting_plan, run_paths.root.parent)
@@ -131,6 +134,9 @@ def evaluate_quality(run_paths: RunPaths, metadata: StoryMetadata, story_text: s
     anchor_warnings = image_prompt_warnings(run_paths.image_prompts)
     for warning in anchor_warnings:
         penalize(True, 7, warning)
+    trend_warnings = trend_quality_warnings(run_paths, metadata)
+    for warning in trend_warnings:
+        warnings.append(warning)
 
     return max(0, min(100, score)), warnings, video_length
 
@@ -196,6 +202,9 @@ def update_weekly_posting_plan(path: Path, output_dir: Path) -> None:
                 "hook_category": plan.get("hook_category"),
                 "quality_score": plan.get("quality_score"),
                 "status": plan.get("status"),
+                "is_trend_experiment": plan.get("is_trend_experiment", False),
+                "trend_id": plan.get("trend_id", ""),
+                "trend_type": plan.get("trend_type", ""),
             }
         )
     weekly.sort(key=lambda item: (item["datum"] or "", item["uhrzeit"] or ""))
@@ -232,6 +241,31 @@ def image_prompt_warnings(path: Path) -> list[str]:
         warnings.append("Mindestens ein start_text-Anker fehlt.")
     if len(set(anchor.casefold() for anchor in anchors)) != len(anchors):
         warnings.append("Doppelte start_text-Anker erkannt.")
+    return warnings
+
+
+def trend_quality_warnings(run_paths: RunPaths, metadata: StoryMetadata) -> list[str]:
+    warnings: list[str] = []
+    if not metadata.is_trend_experiment:
+        return warnings
+    if not run_paths.trend_usage.exists():
+        warnings.append("Trend-Experiment markiert, aber trend_usage.json fehlt.")
+        return warnings
+    try:
+        usage = json.loads(run_paths.trend_usage.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        warnings.append("trend_usage.json ist kein valides JSON.")
+        return warnings
+    if usage.get("risk_level") not in {"low", "medium"}:
+        warnings.append("Trend hat kein niedriges oder mittleres Risiko.")
+    if "fiktive ki-story" not in metadata.caption_text.lower():
+        warnings.append("Trend darf die Fiktionskennzeichnung nicht entfernen.")
+    weekly_trends = [
+        plan for plan in load_existing_plans(run_paths.root.parent)
+        if plan.get("is_trend_experiment")
+    ]
+    if len(weekly_trends) >= 2:
+        warnings.append("Diese Woche sind bereits mehrere Trendvideos geplant.")
     return warnings
 
 

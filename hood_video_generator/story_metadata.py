@@ -28,6 +28,10 @@ class StoryMetadata:
     caption_hook: str = ""
     caption_question: str = ""
     hook_category: str = ""
+    is_trend_experiment: bool = False
+    trend_id: str = ""
+    trend_type: str = ""
+    trend_name: str = ""
 
 
 def split_story_header(story: str) -> tuple[StoryMetadata, str]:
@@ -72,6 +76,10 @@ def load_metadata(path: Path) -> StoryMetadata | None:
         caption_hook=normalize_text(str(data.get("caption_hook", ""))),
         caption_question=normalize_text(str(data.get("caption_question", ""))),
         hook_category=normalize_text(str(data.get("hook_category", ""))),
+        is_trend_experiment=bool(data.get("is_trend_experiment", False)),
+        trend_id=normalize_text(str(data.get("trend_id", ""))),
+        trend_type=normalize_text(str(data.get("trend_type", ""))),
+        trend_name=normalize_text(str(data.get("trend_name", ""))),
     )
 
 
