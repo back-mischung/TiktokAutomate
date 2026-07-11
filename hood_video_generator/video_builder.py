@@ -104,7 +104,7 @@ class VideoBuilder:
                 scene_index=scene_index,
             )
             if scene_index == 0:
-                title_overlay = self._series_overlay_clip(metadata, start=0.75, duration=1.2)
+                title_overlay = self._series_overlay_clip(metadata, start=0.75, duration=3.0)
                 if title_overlay:
                     clip = CompositeVideoClip([clip, title_overlay], size=(settings.video_width, settings.video_height)).set_duration(duration)
             clips.append(clip)
@@ -659,20 +659,22 @@ class VideoBuilder:
     def _render_series_overlay_png(text: str) -> Path:
         cache_dir = ROOT_DIR / "output" / "_subtitle_cache"
         cache_dir.mkdir(parents=True, exist_ok=True)
-        filename = f"series_overlay_{abs(hash(text)) % 10_000_000}.png"
+        title_font_size = 50
+        episode_font_size = 42
+        filename = f"series_overlay_{abs(hash((text, title_font_size, episode_font_size, 2))) % 10_000_000}.png"
         output_path = cache_dir / filename
         if output_path.exists():
             return output_path
-        font = load_font(38, bold=False)
-        small_font = load_font(31, bold=False)
+        font = load_font(title_font_size, bold=False)
+        small_font = load_font(episode_font_size, bold=False)
         lines = text.splitlines()
-        image = Image.new("RGBA", (620, 132), (0, 0, 0, 0))
+        image = Image.new("RGBA", (760, 168), (0, 0, 0, 0))
         panel = Image.new("RGBA", image.size, (0, 0, 0, 118))
         image.alpha_composite(panel)
         draw = ImageDraw.Draw(image)
         draw.rounded_rectangle((0, 0, image.width - 1, image.height - 1), radius=12, outline=(255, 242, 100, 105), width=2)
-        draw.text((24, 18), lines[0], font=font, fill=(255, 255, 255, 235))
-        draw.text((24, 70), lines[1], font=small_font, fill=(255, 242, 112, 230))
+        draw.text((28, 22), lines[0], font=font, fill=(255, 255, 255, 240))
+        draw.text((28, 92), lines[1], font=small_font, fill=(255, 242, 112, 235))
         image.save(output_path)
         return output_path
 
