@@ -14,6 +14,7 @@ class RunPaths:
     subtitles: Path
     story: Path
     image_prompts: Path
+    image_scene_plan: Path
     voiceover: Path
     cover_voiceover: Path
     cover_title_voiceover: Path
@@ -76,6 +77,7 @@ class FileManager:
             subtitles=subtitles,
             story=root / "story.txt",
             image_prompts=root / "image_prompts.json",
+            image_scene_plan=root / "image_scene_plan.json",
             voiceover=audio / "voiceover.mp3",
             cover_voiceover=audio / "cover_voiceover.mp3",
             cover_title_voiceover=audio / "cover_title_voiceover.mp3",

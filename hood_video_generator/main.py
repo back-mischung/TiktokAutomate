@@ -124,7 +124,11 @@ def generate_run(
         image_paths = existing_images(run_paths.images)
     else:
         image_prompt_input = f"Stadt fuer Cover/Thumbnail: {metadata.city}\n\nGesprochene Story:\n{story_body}"
-        prompt_specs = ImagePromptGenerator(run_paths.image_prompts, usage_tracker=usage_tracker).generate_image_prompts(image_prompt_input)
+        prompt_specs = ImagePromptGenerator(
+            run_paths.image_prompts,
+            scene_plan_path=run_paths.image_scene_plan,
+            usage_tracker=usage_tracker,
+        ).generate_image_prompts(image_prompt_input)
         image_paths = ImageGenerator(usage_tracker=usage_tracker).generate_images(
             [spec.prompt for spec in prompt_specs],
             run_paths.images,
