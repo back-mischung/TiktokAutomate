@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import json
 import re
 from pathlib import Path
 
@@ -28,6 +29,7 @@ class StoryGenerator:
         self.usage_tracker = usage_tracker
         self.city = city.strip() if city else None
         self.used_cities = self._used_cities(output_path)
+        self.generated_city: str | None = None
 
     def generate_story(self) -> str:
         prompt = self.prompt_path.read_text(encoding="utf-8").strip()
@@ -40,14 +42,15 @@ class StoryGenerator:
                 if attempt == 1
                 else self._correction_prompt(prompt, story, retry_reason, attempt)
             )
-            story = self._request_story(request_prompt)
+            generated_city, story = self._request_story(request_prompt)
+            self.generated_city = generated_city
             char_count = len(story)
             problems: list[str] = []
             if char_count < settings.story_min_chars:
                 problems.append(f"zu kurz: {char_count} Zeichen")
             elif char_count > settings.story_max_chars:
                 problems.append(f"zu lang: {char_count} Zeichen")
-            city_problem = self._city_problem(story)
+            city_problem = self._city_problem(generated_city)
             if city_problem:
                 problems.append(city_problem)
             if not problems:
@@ -59,7 +62,7 @@ class StoryGenerator:
             final_problems.append(
                 f"Story hat {len(story)} Zeichen; erlaubt sind {settings.story_min_chars} bis {settings.story_max_chars}"
             )
-        city_problem = self._city_problem(story)
+        city_problem = self._city_problem(self.generated_city or "")
         if city_problem:
             final_problems.append(city_problem)
         if final_problems:
@@ -109,20 +112,25 @@ class StoryGenerator:
             "Keine Erklaerung, nur die Story."
         )
 
-    def _request_story(self, prompt: str) -> str:
+    def _request_story(self, prompt: str) -> tuple[str, str]:
         response = self.client.responses.create(
             model=settings.openai_text_model,
             input=[
                 {
                     "role": "system",
                     "content": (
-                        "Du schreibst ausschliesslich die fertige deutsche Storyausgabe, ohne Erklaerung. "
-                        "Die Zeichenlaenge ist wichtiger als Stil. Ueberschreite nie das genannte Maximum."
+                        "Du erzeugst ausschliesslich valides JSON ohne Markdown. "
+                        "Die Zeichenlaenge der Story ist wichtiger als Stil. Ueberschreite nie das genannte Maximum."
                     ),
                 },
                 {
                     "role": "user",
-                    "content": self._request_instructions(prompt),
+                    "content": (
+                        self._request_instructions(prompt)
+                        + "\n\nGib exakt dieses JSON-Format zurueck:\n"
+                        '{"city": "Stadtname", "story": "Reiner Storytext ohne Titelzeile"}\n'
+                        "Die Story darf nicht mit Hood Storys, Folge oder dem Stadtnamen als Titel beginnen."
+                    ),
                 },
             ],
         )
@@ -131,7 +139,15 @@ class StoryGenerator:
         text = response.output_text.strip()
         if not text:
             raise RuntimeError("OpenAI hat keine Story zurueckgegeben.")
-        return text
+        try:
+            data = json.loads(strip_json_fence(text))
+        except json.JSONDecodeError as exc:
+            raise RuntimeError(f"OpenAI hat kein valides Story-JSON zurueckgegeben: {exc}") from exc
+        city = str(data.get("city", "")).strip()
+        story = str(data.get("story", "")).strip()
+        if not city or not story:
+            raise RuntimeError("OpenAI Story-JSON muss city und story enthalten.")
+        return city, remove_story_header(story)
 
     def _request_instructions(self, prompt: str) -> str:
         instructions = f"{prompt}\n\nFolgennummer: {self.episode_number}"
@@ -148,10 +164,10 @@ class StoryGenerator:
             )
         return instructions
 
-    def _city_problem(self, story: str) -> str | None:
-        city = self._extract_city(story)
+    def _city_problem(self, city: str) -> str | None:
+        city = city.strip()
         if not city:
-            return "Stadt fehlt in der Pflichtzeile"
+            return "Stadt fehlt in den Metadaten"
         if self.city and city.casefold() != self.city.casefold():
             return f"falsche Stadt: {city}; verlangt war {self.city}"
         if not self.city and city.casefold() in {used.casefold() for used in self.used_cities}:
@@ -167,6 +183,16 @@ class StoryGenerator:
     def _used_cities(cls, output_path: Path) -> set[str]:
         output_dir = output_path.parent.parent
         cities: set[str] = set()
+        for metadata_path in output_dir.glob("*/metadata.json"):
+            if metadata_path.parent == output_path.parent:
+                continue
+            try:
+                data = json.loads(metadata_path.read_text(encoding="utf-8"))
+                city = str(data.get("city", "")).strip()
+            except (OSError, json.JSONDecodeError):
+                city = ""
+            if city:
+                cities.add(city)
         for story_path in output_dir.glob("*/story.txt"):
             if story_path == output_path:
                 continue
@@ -179,6 +205,14 @@ class StoryGenerator:
     def _derive_episode_number(output_path: Path) -> int:
         output_dir = output_path.parent.parent
         highest = 0
+        for metadata_path in output_dir.glob("*/metadata.json"):
+            if metadata_path.parent == output_path.parent:
+                continue
+            try:
+                data = json.loads(metadata_path.read_text(encoding="utf-8"))
+                highest = max(highest, int(data.get("episode_number", 0)))
+            except (OSError, ValueError, TypeError, json.JSONDecodeError):
+                pass
         for story_path in output_dir.glob("*/story.txt"):
             if story_path == output_path:
                 continue
@@ -192,3 +226,21 @@ class StoryGenerator:
             return int(run_id.rsplit("_", 1)[1])
         except (IndexError, ValueError):
             return 1
+
+
+def strip_json_fence(value: str) -> str:
+    cleaned = value.strip()
+    if cleaned.startswith("```"):
+        cleaned = cleaned.strip("`")
+        cleaned = cleaned.removeprefix("json").strip()
+    return cleaned
+
+
+def remove_story_header(story: str) -> str:
+    return re.sub(
+        r"^\s*Hood Storys aus deutschen St(?:ä|ae|Ã¤|ÃƒÂ¤)dten\s+Folge\s+\d+\s*:\s*.+?(?:\r?\n)+",
+        "",
+        story,
+        count=1,
+        flags=re.IGNORECASE,
+    ).strip()

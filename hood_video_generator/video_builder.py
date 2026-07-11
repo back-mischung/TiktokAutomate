@@ -70,20 +70,13 @@ class VideoBuilder:
         image_prompts_path: Path | None = None,
         alignment_path: Path | None = None,
     ) -> list[VideoClip]:
-        cover = None
         outro = None
-        if settings.cover_enabled:
-            cover = self._cover_clip(
-                image_paths[0],
-                self._cover_duration(metadata),
-                metadata,
-            )
         if settings.outro_enabled:
             outro = self._outro_clip(
                 settings.outro_duration,
             )
         story_images = image_paths[1:]
-        asset_duration = sum(clip.duration for clip in [cover, outro] if clip is not None)
+        asset_duration = sum(clip.duration for clip in [outro] if clip is not None)
         story_duration = max(1.0, audio_duration - asset_duration)
         image_schedule = self._story_image_schedule(
             len(story_images),
@@ -92,10 +85,13 @@ class VideoBuilder:
             alignment_path,
         )
         clips: list[VideoClip] = []
-        if cover:
-            clips.append(cover)
         for animation_index, (image_index, duration) in enumerate(image_schedule):
-            clips.append(self._ken_burns_clip(story_images[image_index], duration, animation_index))
+            clip = self._ken_burns_clip(story_images[image_index], duration, animation_index)
+            if animation_index == 0:
+                title_overlay = self._series_overlay_clip(metadata, start=0.75, duration=1.2)
+                if title_overlay:
+                    clip = CompositeVideoClip([clip, title_overlay], size=(settings.video_width, settings.video_height)).set_duration(duration)
+            clips.append(clip)
         if outro:
             clips.append(outro)
         return clips
@@ -199,6 +195,20 @@ class VideoBuilder:
         title = self._glow_text_clip(display_text(settings.cover_title_text), 0, duration, font_size=settings.cover_title_font_size, y=655)
         episode_clip = self._glow_text_clip(f"Folge {episode}: {city}", 0, duration, font_size=settings.cover_episode_font_size, y=1100)
         return CompositeVideoClip([image, title, episode_clip], size=(settings.video_width, settings.video_height)).set_duration(duration)
+
+    def _series_overlay_clip(self, metadata: StoryMetadata | None, start: float, duration: float) -> VideoClip | None:
+        if not metadata:
+            return None
+        text = f"Hood Storys\nFolge {metadata.episode_number}: {metadata.city}"
+        image_path = self._render_series_overlay_png(text)
+        return (
+            ImageClip(str(image_path))
+            .set_start(start)
+            .set_duration(duration)
+            .set_position((58, 118))
+            .crossfadein(0.12)
+            .crossfadeout(0.18)
+        )
 
     def _outro_clip(self, duration: float) -> VideoClip:
         background_path = self._render_outro_background()
@@ -392,6 +402,27 @@ class VideoBuilder:
                 draw.text((x, y), line, font=font, fill=(255, 242, 80, glow_alpha), stroke_width=glow_width, stroke_fill=(255, 232, 42, glow_alpha))
             draw.text((x, y), line, font=font, fill="white")
             y += line_height
+        image.save(output_path)
+        return output_path
+
+    @staticmethod
+    def _render_series_overlay_png(text: str) -> Path:
+        cache_dir = ROOT_DIR / "output" / "_subtitle_cache"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        filename = f"series_overlay_{abs(hash(text)) % 10_000_000}.png"
+        output_path = cache_dir / filename
+        if output_path.exists():
+            return output_path
+        font = load_font(38, bold=False)
+        small_font = load_font(31, bold=False)
+        lines = text.splitlines()
+        image = Image.new("RGBA", (620, 132), (0, 0, 0, 0))
+        panel = Image.new("RGBA", image.size, (0, 0, 0, 118))
+        image.alpha_composite(panel)
+        draw = ImageDraw.Draw(image)
+        draw.rounded_rectangle((0, 0, image.width - 1, image.height - 1), radius=12, outline=(255, 242, 100, 105), width=2)
+        draw.text((24, 18), lines[0], font=font, fill=(255, 255, 255, 235))
+        draw.text((24, 70), lines[1], font=small_font, fill=(255, 242, 112, 230))
         image.save(output_path)
         return output_path
 

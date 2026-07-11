@@ -1,7 +1,7 @@
 Schreibe eine kurze, spannende deutsche Hood-/Urban-Story fuer ein TikTok-Short-Video.
 
 LAENGE IST DAS WICHTIGSTE:
-- Ziel: 1080 bis 1150 Zeichen inklusive festem Anfang.
+- Ziel: 1080 bis 1150 Zeichen nur fuer den gesprochenen Storytext.
 - Erlaubter Bereich: 1050 bis 1250 Zeichen.
 - Schreibe auf keinen Fall mehr als 1250 Zeichen.
 - Plane die Story absichtlich knapp. Wenn du unsicher bist, schreibe weniger.
@@ -10,11 +10,11 @@ LAENGE IST DAS WICHTIGSTE:
 - Halte dich kurz. Lieber zu knapp als zu lang.
 - Keine langen Beschreibungen, keine Nebenhandlungen, keine Ausschmueckungen.
 
-Fester Anfang:
-Die erste Zeile MUSS exakt so aussehen:
-Hood Storys aus deutschen Städten Folge [X]: [STADT]
-
-Danach direkt die Story.
+Wichtig:
+- Die Story beginnt direkt mit Absatz 1.
+- Schreibe KEINE Zeile wie "Hood Storys aus deutschen Städten Folge [X]: [STADT]".
+- Diese Serienzeile ist nur ein Videotitel/Overlay und gehoert nicht in den gesprochenen Storytext.
+- Der erste Satz muss direkt eine spannende Handlung oder merkwuerdige Situation zeigen.
 
 Aufbau:
 - Insgesamt nur 4 kurze Absaetze nach der ersten Zeile.
@@ -44,7 +44,8 @@ Ich- oder Wir-Erzaehler.
 
 Regeln:
 - Keine Erklaerung.
-- Keine Ueberschrift ausser der ersten Pflichtzeile.
+- Keine Ueberschrift.
+- Keine Titelzeile.
 - Keine expliziten Gore-Beschreibungen.
 - Kein langsamer Einstieg.
 - Alle 5 bis 8 Sekunden muss etwas passieren.

@@ -81,28 +81,35 @@ def generate_run(
     if (keep_story or skip_images or skip_voice) and run_paths.story.exists():
         story = run_paths.story.read_text(encoding="utf-8")
         logger.info("Using existing story: %s", run_paths.story)
+        generated_metadata = None
     elif keep_story:
         raise RuntimeError(f"--keep-story gesetzt, aber Story fehlt: {run_paths.story}")
     else:
-        story = StoryGenerator(run_paths.story, usage_tracker=usage_tracker, city=city).generate_story()
+        story_generator = StoryGenerator(run_paths.story, usage_tracker=usage_tracker, city=city)
+        story = story_generator.generate_story()
+        generated_metadata = StoryMetadata(
+            episode_number=story_generator.episode_number,
+            city=story_generator.generated_city or city or "deutschen Städten",
+            cover_text=f"Hood Storys. Folge {story_generator.episode_number}: {story_generator.generated_city or city or 'deutschen Städten'}",
+        )
     if story_only:
         usage_tracker.save()
         logger.info("Story-only run finished: %s", run_paths.story)
         return
 
     metadata, story_body = split_story_header(story)
+    saved_metadata = load_metadata(run_paths.metadata)
+    if generated_metadata:
+        metadata = generated_metadata
+    elif saved_metadata:
+        metadata = saved_metadata
 
     if skip_voice:
         if not run_paths.voiceover.exists():
             raise RuntimeError(f"--skip-voice gesetzt, aber {run_paths.voiceover} existiert nicht.")
         audio_path = run_paths.voiceover
-        saved_metadata = load_metadata(run_paths.metadata)
-        if saved_metadata:
-            metadata = saved_metadata
     else:
         voice_generator = VoiceGenerator(usage_tracker=usage_tracker)
-        voice_generator.generate_voiceover("Hood Storys aus deutschen Städten.", run_paths.cover_title_voiceover)
-        voice_generator.generate_voiceover(f"Folge {metadata.episode_number}: {metadata.city}.", run_paths.cover_episode_voiceover)
         voice_generator.generate_voiceover(
             story_body,
             run_paths.story_voiceover,
@@ -114,7 +121,8 @@ def generate_run(
     if skip_images:
         image_paths = existing_images(run_paths.images)
     else:
-        prompt_specs = ImagePromptGenerator(run_paths.image_prompts, usage_tracker=usage_tracker).generate_image_prompts(story)
+        image_prompt_input = f"Stadt fuer Cover/Thumbnail: {metadata.city}\n\nGesprochene Story:\n{story_body}"
+        prompt_specs = ImagePromptGenerator(run_paths.image_prompts, usage_tracker=usage_tracker).generate_image_prompts(image_prompt_input)
         image_paths = ImageGenerator(usage_tracker=usage_tracker).generate_images(
             [spec.prompt for spec in prompt_specs],
             run_paths.images,
@@ -150,9 +158,12 @@ def build_video_from_existing(run_paths: RunPaths) -> None:
     image_paths = existing_images(run_paths.images)
     if not run_paths.voiceover.exists():
         raise RuntimeError(f"Voiceover fehlt: {run_paths.voiceover}")
-    if run_paths.cover_title_voiceover.exists() and run_paths.cover_episode_voiceover.exists() and run_paths.story_voiceover.exists():
+    if run_paths.story_voiceover.exists():
         story = run_paths.story.read_text(encoding="utf-8")
         metadata, _ = split_story_header(story)
+        saved_metadata = load_metadata(run_paths.metadata)
+        if saved_metadata:
+            metadata = saved_metadata
         _, metadata = build_audio_track(run_paths, metadata)
         save_metadata(run_paths.metadata, metadata)
     if not run_paths.story.exists():
@@ -217,17 +228,11 @@ def existing_images(images_dir: Path) -> list[Path]:
 
 
 def build_audio_track(run_paths: RunPaths, metadata: StoryMetadata) -> tuple[Path, StoryMetadata]:
-    tempo_adjust(run_paths.cover_title_voiceover, run_paths.cover_title_voiceover_timed, settings.voice_speed)
-    tempo_adjust(run_paths.cover_episode_voiceover, run_paths.cover_episode_voiceover_timed, settings.voice_speed)
     tempo_adjust(run_paths.story_voiceover, run_paths.story_voiceover_timed, settings.voice_speed)
-    title = AudioFileClip(str(run_paths.cover_title_voiceover_timed))
-    episode = AudioFileClip(str(run_paths.cover_episode_voiceover_timed))
     story = AudioFileClip(str(run_paths.story_voiceover_timed))
     logger.info(
-        "Audio speed %.2fx: title=%.2fs episode=%.2fs story=%.2fs outro=%.2fs",
+        "Audio speed %.2fx: story=%.2fs outro=%.2fs",
         settings.voice_speed,
-        title.duration,
-        episode.duration,
         story.duration,
         settings.outro_duration,
     )
@@ -238,46 +243,11 @@ def build_audio_track(run_paths: RunPaths, metadata: StoryMetadata) -> tuple[Pat
         fps=44100,
     )
     outro_silence = AudioClip(lambda t: 0, duration=settings.outro_duration, fps=44100)
-    voice_track = concatenate_audioclips([title, episode, story, story_end_padding, outro_silence])
+    voice_track = concatenate_audioclips([story, story_end_padding, outro_silence])
     audio_layers = [voice_track]
-    transition_reload = None
-    transition_boom = None
-    transition_path = resolve_asset(settings.cover_transition_sound)
-    if transition_path.exists():
-        split_tempo_adjust_parts(
-            transition_path,
-            run_paths.cover_transition_reload_processed,
-            run_paths.cover_transition_boom_processed,
-            settings.cover_transition_sound_start_seconds,
-            settings.cover_transition_split_seconds,
-            settings.cover_transition_first_speed,
-            settings.cover_transition_second_speed,
-        )
-        transition_reload = AudioFileClip(str(run_paths.cover_transition_reload_processed))
-        transition_boom = AudioFileClip(str(run_paths.cover_transition_boom_processed))
-        cover_end = title.duration + episode.duration
-        reload_start = title.duration
-        reload_end = reload_start + transition_reload.duration
-        boom_start = max(
-            0.0,
-            cover_end - settings.cover_transition_sync_advance_seconds,
-        )
-        audio_layers.append(
-            transition_reload.volumex(settings.cover_transition_reload_volume).set_start(reload_start)
-        )
-        audio_layers.append(
-            transition_boom.volumex(settings.cover_transition_volume).set_start(boom_start)
-        )
-        logger.info(
-            "SFX timeline: reload %.2f-%.2fs, boom starts %.2fs, cover ends %.2fs",
-            reload_start,
-            reload_end,
-            boom_start,
-            cover_end,
-        )
     combined = CompositeAudioClip(audio_layers).set_duration(voice_track.duration)
     combined.write_audiofile(str(run_paths.voiceover), fps=44100, logger=None)
-    cover_duration = float(title.duration + episode.duration)
+    cover_duration = 0.0
     updated_metadata = StoryMetadata(
         episode_number=metadata.episode_number,
         city=metadata.city,
@@ -286,12 +256,8 @@ def build_audio_track(run_paths: RunPaths, metadata: StoryMetadata) -> tuple[Pat
         cover_duration_seconds=cover_duration,
         transition_duration_seconds=0.0,
     )
-    for clip in [title, episode, story, story_end_padding, outro_silence, *audio_layers]:
+    for clip in [story, story_end_padding, outro_silence, *audio_layers]:
         clip.close()
-    if transition_reload is not None:
-        transition_reload.close()
-    if transition_boom is not None:
-        transition_boom.close()
     combined.close()
     return run_paths.voiceover, updated_metadata
 
