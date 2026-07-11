@@ -29,6 +29,7 @@ class RunPaths:
     cover_transition_boom_processed: Path
     subtitles_srt: Path
     subtitles_json: Path
+    subtitle_groups: Path
     metadata: Path
     usage_report: Path
     caption: Path
@@ -92,6 +93,7 @@ class FileManager:
             cover_transition_boom_processed=audio / "cover_transition_boom_processed.mp3",
             subtitles_srt=subtitles / "subtitles.srt",
             subtitles_json=subtitles / "subtitles.json",
+            subtitle_groups=root / "subtitle_groups.json",
             metadata=root / "metadata.json",
             usage_report=root / "usage_report.json",
             caption=root / "caption.txt",

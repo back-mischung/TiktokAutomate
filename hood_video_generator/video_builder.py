@@ -525,8 +525,17 @@ class VideoBuilder:
             duration = end - start
             if duration <= 0:
                 continue
+            is_emphasis = bool(segment.get("is_emphasis", False))
             clips.append(
-                self._text_overlay_clip(
+                self._emphasis_text_overlay_clip(
+                    segment["text"],
+                    start,
+                    duration,
+                    font_size=settings.subtitle_font_size + 10,
+                    y=settings.video_height - settings.subtitle_y_from_bottom,
+                )
+                if is_emphasis
+                else self._text_overlay_clip(
                     segment["text"],
                     start,
                     duration,
@@ -539,6 +548,21 @@ class VideoBuilder:
     def _text_overlay_clip(self, text: str, start: float, duration: float, font_size: int, y: float) -> VideoClip:
         image_path = self._render_text_png(text, font_size)
         return ImageClip(str(image_path)).set_start(start).set_duration(duration).set_position(("center", int(y)))
+
+    def _emphasis_text_overlay_clip(self, text: str, start: float, duration: float, font_size: int, y: float) -> VideoClip:
+        image_path = self._render_text_png(text, font_size, emphasis=True)
+        clip = ImageClip(str(image_path)).set_start(start).set_duration(duration)
+
+        def scale(t: float) -> float:
+            progress = min(1.0, max(0.0, t / max(duration, 0.01)))
+            return 1.0 + 0.075 * math.exp(-7.0 * progress) * math.sin(progress * math.pi)
+
+        def position(t: float) -> tuple[str, float]:
+            progress = min(1.0, max(0.0, t / max(duration, 0.01)))
+            shake = 3.0 * math.exp(-8.0 * progress) * math.sin(42.0 * t)
+            return ("center", int(y + shake))
+
+        return clip.resize(scale).set_position(position)
 
     def _glow_text_clip(self, text: str, start: float, duration: float, font_size: int, y: float) -> VideoClip:
         image_path = self._render_glow_text_png(text, font_size)
@@ -564,10 +588,10 @@ class VideoBuilder:
         return CompositeAudioClip([audio, music]).set_duration(audio.duration)
 
     @staticmethod
-    def _render_text_png(text: str, font_size: int) -> Path:
+    def _render_text_png(text: str, font_size: int, emphasis: bool = False) -> Path:
         cache_dir = ROOT_DIR / "output" / "_subtitle_cache"
         cache_dir.mkdir(parents=True, exist_ok=True)
-        filename = f"subtitle_{abs(hash((text, font_size))) % 10_000_000}.png"
+        filename = f"subtitle_{abs(hash((text, font_size, emphasis))) % 10_000_000}.png"
         output_path = cache_dir / filename
         if output_path.exists():
             return output_path
@@ -582,7 +606,19 @@ class VideoBuilder:
         for line in lines:
             bbox = draw.textbbox((0, 0), line, font=font, stroke_width=5)
             x = (image.width - (bbox[2] - bbox[0])) / 2
-            draw.text((x, y), line, font=font, fill="white", stroke_width=5, stroke_fill="black")
+            if emphasis:
+                for glow_width, alpha in ((13, 70), (7, 120)):
+                    draw.text(
+                        (x, y),
+                        line,
+                        font=font,
+                        fill=(255, 235, 72, alpha),
+                        stroke_width=glow_width,
+                        stroke_fill=(255, 220, 42, alpha),
+                    )
+                draw.text((x, y), line, font=font, fill=(255, 255, 245), stroke_width=5, stroke_fill="black")
+            else:
+                draw.text((x, y), line, font=font, fill="white", stroke_width=5, stroke_fill="black")
             y += line_height
         image.save(output_path)
         return output_path

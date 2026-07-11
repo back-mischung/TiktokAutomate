@@ -146,6 +146,8 @@ def generate_run(
         metadata.story_start_seconds,
         alignment_path=run_paths.story_alignment,
         tempo_factor=settings.voice_speed,
+        subtitle_groups_path=run_paths.subtitle_groups,
+        image_prompts_path=run_paths.image_prompts,
     )
     VideoBuilder().build_video(
         image_paths,
@@ -189,6 +191,8 @@ def build_video_from_existing(run_paths: RunPaths, refresh_posting_plan: bool = 
         metadata.story_start_seconds,
         alignment_path=run_paths.story_alignment,
         tempo_factor=settings.voice_speed,
+        subtitle_groups_path=run_paths.subtitle_groups,
+        image_prompts_path=run_paths.image_prompts,
     )
     metadata = generate_caption(metadata, run_paths.caption, story_body)
     save_metadata(run_paths.metadata, metadata)
