@@ -6,13 +6,14 @@ from pathlib import Path
 
 from moviepy.editor import AudioClip, AudioFileClip, CompositeAudioClip, afx, concatenate_audioclips
 
-from audio_utils import split_tempo_adjust_parts, tempo_adjust
+from audio_utils import tempo_adjust
 from caption_generator import generate_caption
 from config import configure_logging, settings
 from file_manager import FileManager, RunPaths
 from image_generator import ImageGenerator
 from image_prompt_generator import ImagePromptGenerator
 from posting_planner import create_or_update_posting_plan
+from sound_design import SoundDesigner
 from story_generator import StoryGenerator
 from story_metadata import StoryMetadata, load_metadata, save_metadata, split_story_header
 from subtitle_generator import SubtitleGenerator
@@ -117,8 +118,7 @@ def generate_run(
             run_paths.story_voiceover,
             alignment_path=run_paths.story_alignment,
         )
-        audio_path, metadata = build_audio_track(run_paths, metadata)
-    log_audio_duration(audio_path)
+        audio_path = run_paths.voiceover
 
     if skip_images:
         image_paths = existing_images(run_paths.images)
@@ -135,6 +135,10 @@ def generate_run(
         )
     if len(image_paths) != settings.total_image_count:
         raise RuntimeError(f"Fuer den Video-Bau werden genau {settings.total_image_count} Bilder benoetigt.")
+
+    if not skip_voice:
+        audio_path, metadata = build_audio_track(run_paths, metadata, story_body)
+    log_audio_duration(audio_path)
 
     metadata = generate_caption(metadata, run_paths.caption, story_body)
     save_metadata(run_paths.metadata, metadata)
@@ -174,7 +178,7 @@ def build_video_from_existing(run_paths: RunPaths, refresh_posting_plan: bool = 
         saved_metadata = load_metadata(run_paths.metadata)
         if saved_metadata:
             metadata = saved_metadata
-        _, metadata = build_audio_track(run_paths, metadata)
+        _, metadata = build_audio_track(run_paths, metadata, story)
         save_metadata(run_paths.metadata, metadata)
     if not run_paths.story.exists():
         raise RuntimeError("Story fehlt. Untertitel koennen nicht neu erzeugt werden.")
@@ -239,7 +243,7 @@ def existing_images(images_dir: Path) -> list[Path]:
     return paths
 
 
-def build_audio_track(run_paths: RunPaths, metadata: StoryMetadata) -> tuple[Path, StoryMetadata]:
+def build_audio_track(run_paths: RunPaths, metadata: StoryMetadata, story_text: str) -> tuple[Path, StoryMetadata]:
     tempo_adjust(run_paths.story_voiceover, run_paths.story_voiceover_timed, settings.voice_speed)
     story = AudioFileClip(str(run_paths.story_voiceover_timed))
     logger.info(
@@ -258,7 +262,16 @@ def build_audio_track(run_paths: RunPaths, metadata: StoryMetadata) -> tuple[Pat
     voice_track = concatenate_audioclips([story, story_end_padding, outro_silence])
     audio_layers = [voice_track]
     combined = CompositeAudioClip(audio_layers).set_duration(voice_track.duration)
-    combined.write_audiofile(str(run_paths.voiceover), fps=44100, logger=None)
+    dry_voiceover = run_paths.audio / "voiceover_dry.mp3"
+    combined.write_audiofile(str(dry_voiceover), fps=44100, logger=None)
+    SoundDesigner(run_paths.sound_plan).mix(
+        dry_voiceover,
+        run_paths.voiceover,
+        story_text,
+        run_paths.story_alignment,
+        run_paths.image_prompts,
+        voice_track.duration,
+    )
     cover_duration = 0.0
     updated_metadata = StoryMetadata(
         episode_number=metadata.episode_number,

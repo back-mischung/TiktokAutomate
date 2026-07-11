@@ -35,6 +35,7 @@ class RunPaths:
     caption: Path
     posting_plan: Path
     weekly_posting_plan: Path
+    sound_plan: Path
     final_video: Path
 
 
@@ -99,5 +100,6 @@ class FileManager:
             caption=root / "caption.txt",
             posting_plan=root / "posting_plan.json",
             weekly_posting_plan=self.output_dir / "weekly_posting_plan.json",
+            sound_plan=root / "sound_plan.json",
             final_video=root / "final_video.mp4",
         )

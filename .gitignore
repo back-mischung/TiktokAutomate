@@ -21,6 +21,9 @@ tokens.json
 # Generated media/output
 hood_video_generator/output/*
 !hood_video_generator/output/.gitkeep
+hood_video_generator/assets/sounds/*
+!hood_video_generator/assets/sounds/.gitkeep
+hood_video_generator/assets/sounds/converted/
 tiktok_video_uploader/output/
 
 # Logs and temporary files
