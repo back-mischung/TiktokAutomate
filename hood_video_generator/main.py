@@ -97,6 +97,7 @@ def generate_run(
             city=story_generator.generated_city or city or "deutschen Städten",
             cover_text=f"Hood Storys. Folge {story_generator.episode_number}: {story_generator.generated_city or city or 'deutschen Städten'}",
         )
+        save_metadata(run_paths.metadata, generated_metadata)
     if story_only:
         usage_tracker.save()
         logger.info("Story-only run finished: %s", run_paths.story)

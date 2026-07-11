@@ -80,7 +80,7 @@ def save_metadata(path: Path, metadata: StoryMetadata) -> None:
 def load_metadata(path: Path) -> StoryMetadata | None:
     if not path.exists():
         return None
-    data = json.loads(path.read_text(encoding="utf-8"))
+    data = json.loads(path.read_text(encoding="utf-8-sig"))
     return StoryMetadata(
         run_id=normalize_text(str(data.get("run_id", ""))),
         episode_number=int(data.get("episode_number", 1)),
