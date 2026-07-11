@@ -44,16 +44,43 @@ class ImagePromptGenerator:
 
     def generate_image_prompts(self, story: str) -> list[ImagePromptSpec]:
         system_prompt = self.system_prompt_path.read_text(encoding="utf-8").strip()
-        response = self.client.responses.create(
-            model=settings.openai_text_model,
-            input=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": story},
-            ],
-        )
-        if self.usage_tracker:
-            self.usage_tracker.add_openai_response(response, settings.openai_text_model, "image_prompt_generation")
-        prompts = self._parse_prompt_list(response.output_text)
+        prompts: list[ImagePromptSpec] | None = None
+        last_error: Exception | None = None
+        last_output = ""
+        for attempt in range(1, 6):
+            retry_note = (
+                ""
+                if attempt == 1
+                else (
+                    "\n\nWICHTIGER RETRY: Die letzte Antwort war kein valides Format. "
+                    f"Antworte diesmal NUR mit einer JSON-Liste mit exakt {settings.total_image_count} Objekten. "
+                    "Kein Markdown, kein Text davor oder danach."
+                )
+            )
+            response = self.client.responses.create(
+                model=settings.openai_text_model,
+                input=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": story + retry_note},
+                ],
+            )
+            if self.usage_tracker:
+                self.usage_tracker.add_openai_response(response, settings.openai_text_model, "image_prompt_generation")
+            last_output = response.output_text
+            try:
+                prompts = self._parse_prompt_list(last_output)
+                break
+            except (json.JSONDecodeError, RuntimeError) as exc:
+                last_error = exc
+                logger.info("Bildprompt-Ausgabe ungueltig (%s). Retry %s/5.", exc, attempt)
+        if prompts is None:
+            debug_path = self.output_path.with_suffix(".raw_response.txt")
+            debug_path.parent.mkdir(parents=True, exist_ok=True)
+            debug_path.write_text(last_output, encoding="utf-8")
+            raise RuntimeError(
+                f"Bildprompt-Erstellung nach 5 Versuchen fehlgeschlagen: {last_error}. "
+                f"Letzte Rohantwort gespeichert unter {debug_path}"
+            )
         self._warn_about_scene_plan(prompts, story)
         self.output_path.write_text(
             json.dumps(
@@ -77,6 +104,10 @@ class ImagePromptGenerator:
         if cleaned.startswith("```"):
             cleaned = cleaned.strip("`")
             cleaned = cleaned.removeprefix("json").strip()
+        if not cleaned.startswith("["):
+            match = re.search(r"\[[\s\S]*\]", cleaned)
+            if match:
+                cleaned = match.group(0)
         data = json.loads(cleaned)
         if not isinstance(data, list) or len(data) != settings.total_image_count:
             raise RuntimeError(
